@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Shiritori Game</title>
+  <style>
+    *{
+        background-color: bisque;
+    }
+    body h1{
+        font-family: chalkboard SE;
+        font-size: 50px;
+        text-align: center;
+        color: rgb(255, 4, 4);
+        animation: blink 1s infinite;;
+    }
+    div{
+        align-items: center;
+        margin-left: 30%;
+    }
+    span{
+        color: rgb(51, 9, 236);
+    }
+    button{
+        background-color: aqua;
+    }
+    @keyframes blink {
+            0% { opacity: 1; }
+            50% { opacity: 0.4; }
+            100% { opacity: 1; }
+    }
+  </style>
+</head>
+<body>
+  <h1>Shiritori Game</h1>
+  <div>
+    <input type="text" id="wordInput" placeholder="Enter a word"><br><br>
+    &nbsp&nbsp&nbsp&nbsp&nbsp<button onclick="playWord()">Play</button>&nbsp&nbsp
+    <button onclick="restartGame()">Restart</button>
+  </div>
+  <p id="status"></p>
+  <p>Words used: <span id="wordsUsed"></span></p>
+  <script>
+    let words = [];
+    let game_over = false;
+
+    function playWord() {
+      if (game_over) {
+        document.getElementById("status").innerText = "Game over! Restart to play again.";
+        return;
+      }
+
+      let word = document.getElementById("wordInput").value.toLowerCase();
+      if (word === "") return;
+
+      // Rule 2: word should not have already been said
+      if (words.includes(word)) {
+        game_over = true;
+        document.getElementById("status").innerText = "Game over! Word already used.";
+        return;
+      }
+
+      // Rule 1: first character must match last character of previous word
+      if (words.length > 0 && word[0] !== words[words.length - 1].slice(-1)) {
+        game_over = true;
+        document.getElementById("status").innerText = "Game over! Word does not start with correct letter.";
+        return;
+      }
+
+      words.push(word);
+      document.getElementById("status").innerText = "Valid word!";
+      document.getElementById("wordsUsed").innerText = words.join(", ");
+      document.getElementById("wordInput").value = "";
+    }
+
+    function restartGame() {
+      words = [];
+      game_over = false;
+      document.getElementById("status").innerText = "Game restarted!";
+      document.getElementById("wordsUsed").innerText = "";
+      document.getElementById("wordInput").value = "";
+    }
+  </script>
+</body>
+</html>

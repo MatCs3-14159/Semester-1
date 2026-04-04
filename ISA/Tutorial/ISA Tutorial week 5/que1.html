@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Dynamic Input button</title>
+    <style>
+        *{
+            font-family: chalkboard;
+          
+        }
+        body {
+            background-color: black;
+        }
+        #button{
+            box-shadow: 0 0 12px #00eaff33;
+            background-color: bisque;
+            color:black;
+            animation:blink 0.5s infinite;;
+        }
+        #userinput{
+            background-color: antiquewhite;
+        }
+        @keyframes blink {
+            0%{opacity: 1;}
+            50%{opacity: 0.5;}
+            100%{opacity: 1;}
+        }
+    </style>
+</head>
+<body>
+    <input type="text" id="userinput" placeholder="Enter the value">
+    <input type="button" id = "button" value = "Submit" onclick="addtovar()">
+    <script>
+        let store = "";
+        document.addEventListener("keydown",function(event){
+            if (event.key === "Enter"){
+                document.getElementById("button").click();
+            }
+        });
+        function addtovar(){
+            let input = document.getElementById("userinput").value;
+            store += input + "";
+            console.log(store);
+            document.getElementById("userinput").value = "";
+        }
+    </script>
+</body>
+</html>

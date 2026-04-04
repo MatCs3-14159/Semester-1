@@ -1,0 +1,13 @@
+def get_value(my_dict, key):
+    try:
+        value = my_dict[key]
+    except KeyError:
+        print(f"Error: The key '{key}' does not exist in the dictionary.")
+        return None
+    else:
+        return value
+    
+sample_dict = {"name": "Alice", "age": 25, "city": "New York"}
+
+print("Value:", get_value(sample_dict, "age"))
+print("Value:", get_value(sample_dict, "country"))

@@ -1,0 +1,8 @@
+try:
+    numbers_input = input("Enter integers separated by spaces: ")
+    numbers = [int(num) for num in numbers_input.split()]
+    total = sum(numbers)
+except ValueError:
+    print("Invalid input! Please enter integers only.")
+else:
+    print(f"The sum of the entered integers is: {total}")

@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <!--
+    ================================================================================
+    =                                                                              =
+    =                           WELCOME TO MY WEB APP                              =
+    =                                                                              =
+    = This section is the main entry point of the web app.                         =
+    = All features and functionality should be coded below this comment.           =
+    = This is welcome portal of my weather app Liteleaf.                           =
+    =                                                                              =
+    =                          INSTRUCTIONS FOR DEVELOPERS:                        =
+    = 1. Do not remove this comment.                                               =
+    = 2. Place new sections below in an organized manner.                          =
+    = 3. Use consistent indentation and naming conventions.                        =
+    = 4. Ensure all HTML elements are properly closed and nested.                  =
+    = 5. Add comments to explain complex sections of code.                         =
+    = 6. Ensure all CSS and JavaScript are properly linked and functional.         =
+    = 7. Test the application thoroughly before deployment.                        =
+    = 8. Ensure accessibility standards are met.                                   =
+    = 9. Ensure all code is properly documented and maintainable.                  =
+    ================================================================================
+    -->
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<script src="https://kit.fontawesome.com/488626c0db.js" crossorigin="anonymous"></script>
+<title>!!Welcome portal!!</title>
+<!-------------------------------Internal CSS----------------------------------->
+<style>
+    /*============================Universal selector=================================*/
+    * {
+        margin: 0;
+        padding: 0;
+    }
+    /*====================================Body=======================================*/
+    body{
+        font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+        margin-top: 8%;
+        color: rgb(83, 83, 83);
+        font-size: 100px;
+        background: linear-gradient(
+            -45deg, 
+            #000000,
+            #ffffff, 
+            #000000, 
+            #000000
+        );
+        background-size: 400% 400%;
+        animation: gradientShift 15s ease infinite;
+        bottom: 25px;
+    }
+    /*=================================TAGLINE=======================================*/
+    #tagline{
+        font-family: chalkboard;
+        font-size: 30px;
+        background: linear-gradient(
+            -45deg, 
+            rgb(49, 0, 0),
+            rgb(3, 83, 11), 
+            #380000, 
+            #2e0101);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+    }
+    /*===================================ICONS=======================================*/
+    i{
+        color: rgb(3, 83, 11);
+    }
+    /*===============================NAVIGATION BAR=================================*/
+    .navbar {
+        font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+        color: rgb(133, 133, 133);
+        width: 100%;
+        height: 40px;
+        font-size: 30px;
+        padding: 5px 5px;
+        background: #000000;
+        position: fixed;
+        top: 0%;
+    }
+    /*===============================Arrow Button=================================*/
+    .btn {
+        font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+        font-weight: bold;
+        position: fixed;
+        bottom: 20%;
+        left: 50%;
+        transform: translateX(-50%);
+        background: #ffffff;
+        border: none;
+        padding: 15px 20px;
+        border-radius: 10px;
+        font-size: 28px;
+        cursor: pointer;
+        backdrop-filter: blur(4px);
+        box-shadow: 0 0 12px rgba(0,0,0,0.3);
+        animation: blink 1s infinite;
+        transition: 0.3s;
+    }
+    .btn:hover {
+        background: linear-gradient(135deg,
+        #3a2c00 0%,
+        #ab8300 30%,
+        #c9a24d 50%,
+        #b8963a 65%,
+        #a37a23 80%,
+        #2f2400 100%
+        );
+        transform: translateX(-50%) scale(1.1);
+    }
+    @keyframes blink {
+        0% { opacity: 1; }
+        50% { opacity: 0.3; }
+        100% { opacity: 1; }
+    }
+    /*===============================FOOTER=================================*/
+    .footer {
+        font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+        background: #000000;
+        color: #ddd;
+        padding: 25px;
+        width: 100%;
+        position: fixed;
+        bottom: 0%;
+    }
+    .footerbottom {
+        text-align: center;
+        font-size: 15px;
+        color: #999;
+    }
+    /*===================KEYFRAMES AND EFFECT CONTROLS===================================*/
+    @keyframes gradientShift {
+        0% { background-position: 0% 50%; }
+        50% { background-position: 100% 50%; }
+        100% { background-position: 0% 50%; }
+    }
+</style>
+</head>
+<body>
+<!--------------------navigation------------------->
+<nav class="navbar"><span><i class="fa-brands fa-envira"></i> Liteleaf</nav> 
+<!----------------------Audio---------------------->
+<audio id="bgMusic" autoplay muted>
+    <source src="https://aqua-charmain-7.tiiny.site/solar.mp3" type="audio/mpeg">
+</audio>
+<!---------------------Welcome---------------------->
+<span><div><h1><center>Welcome to <br>&nbsp&nbsp&nbsp&nbspLiteleaf<i class="fa-brands fa-envira"></i></center></h1></div></span>
+<div id="tagline"><p><center>[ Lite up your day with Weather ]</center></p></div>
+<!---------------------button----------------------->
+<button class="btn" onclick="gotoApp()">Go to App →</button>
+<audio id="clickSound" src="https://aqua-charmain-7.tiiny.site/click.mp3"></audio>
+<!---------------------footer----------------------->
+<footer class="footer">
+    <p class="footerbottom">© 2026 Liteleaf<i class="fa-brands fa-envira"></i> | All Rights Reserved</p>
+</footer>
+<!-------------------Javascript---------------------->
+<script>
+    // -----------------> Go to App 
+    function gotoApp() {
+    const sound = document.getElementById("clickSound");
+    sound.play();
+    setTimeout(() => {
+        window.location.href = "Liteleaf🍃.html";
+    },500);
+    };
+    //------------------> Background Music
+    document.addEventListener("click", unmute);
+    function unmute() {
+        const audio = document.getElementById("bgMusic");
+        audio.muted = false;
+        document.removeEventListener("click", unmute);
+    }
+</script>
+</body>
+</html>

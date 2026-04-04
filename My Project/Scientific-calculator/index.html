@@ -1,0 +1,162 @@
+<!--
+    Derivix - A Scientific Calculator
+    
+    Description: 
+    A web-based scientific calculator with a modern design, featuring a wide range of mathematical functions, history tracking, and user authentication.
+
+    Technologies: HTML, CSS, JavaScript, Font Awesome
+    
+    Authors: Sagar Mishra
+    Version: 1.0
+    Date: 6 Feb 2026
+-->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Derivix- A Scientific Calculator</title>
+    <script src="https://kit.fontawesome.com/64fb72f3dc.js" crossorigin="anonymous"></script>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <!-- Navigation Bar -->
+    <nav class="navbar">
+        <div class="logo"><i class="fa-solid fa-calculator"></i> Derivix</div>
+            <div class="datetime">
+            <div id="time">00:00:00</div>
+            <div id="date">Loading...</div>
+        </div>
+        <ul class="nav-links">
+            <li><a href="signin.html" id="nav-signin">Sign In</a></li>
+            <li><a href="signup.html" id="nav-signup">Sign Up</a></li>
+        </ul>
+    </nav>
+
+    <!-- Main App Container -->
+    <div class="app-container">
+        <!-- Sidebar: History -->
+        <aside class="sidebar" id="history-sidebar">
+            <h3>History &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+            <button class ="history-btn">
+                <i class="fa-regular fa-trash-can"></i>
+            </button>&nbsp;
+            <button class ="history-btn">
+                <i class="fa-solid fa-delete-left"></i>
+            </button>
+            </h3>
+            
+            <ul id="history-list">
+                <!-- History items will be added here dynamically -->
+            </ul>
+        </aside>
+        <!-- Main Content Area -->
+        <main class="main-content" id="main-content">
+            <div id="particles-js"></div>
+            <!-- Calculator / Signin / Signup content will appear here -->
+             <!-- Calculator -->
+            <div class="calculator">
+
+                <!-- Display Screen -->
+                <div class="calc-screen">
+                    <input 
+                    type="text" 
+                    class="calc-input" 
+                    placeholder="0"
+                    inputmode="decimal"
+                    autocomplete="off"
+                    autocorrect="off"
+                    spellcheck="false">
+                    <div class="calc-mode">DEG</div>
+                </div>
+                <div class="calc-buttons">
+                    <button class="btn func">DEG</button>
+                    <button class="btn func">RAD</button>
+                    <button class="btn func">π</button>
+                    <button class="btn danger">C</button>
+                    <button class="btn delete">
+                        <i class="fa-solid fa-delete-left"></i>
+                    </button>
+                    <button class="btn func">e</button>
+                    <button class="btn func">x²</button>
+                    <button class="btn func">x³</button>
+                    <button class="btn func">xʸ</button>
+                    <button class="btn func">√</button>
+                    <button class="btn func">sin</button>
+                    <button class="btn func">cos</button>
+                    <button class="btn func">tan</button>
+                    <button class="btn func">log</button>
+                    <button class="btn func">∛</button>
+                    <button class="btn func">sin⁻¹</button>
+                    <button class="btn func">cos⁻¹</button>
+                    <button class="btn func">tan⁻¹</button>
+                    <button class="btn func">ln</button>
+                    <button class="btn func">eˣ</button>
+                    <button class="btn func">10ˣ</button>
+                    <button class="btn func">EXP</button>
+                    <button class="btn func">!</button>
+                    <button class="btn func">nPr</button>
+                    <button class="btn func">nCr</button>
+                    <button class="btn func">|x|</button>
+                    <button class="btn func">MOD</button>
+                    <button class="btn func">a/b</button>
+                    <button class="btn func">Dec↔Frac</button>
+                    <button class="btn func">Mixed</button>
+                    <button class="btn func">Σx</button>
+                    <button class="btn func">Σx²</button>
+                    <button class="btn func">Mean</button>
+                    <button class="btn func">Variance</button>
+                    <button class="btn func">Std Dev</button>
+                    <button class="btn num">7</button>
+                    <button class="btn num">8</button>
+                    <button class="btn num">9</button>
+                    <button class="btn op">÷</button>
+                    <button class="btn func">(</button>
+                    <button class="btn num">4</button>
+                    <button class="btn num">5</button>
+                    <button class="btn num">6</button>
+                    <button class="btn op">×</button>
+                    <button class="btn func">)</button>
+                    <button class="btn num">1</button>
+                    <button class="btn num">2</button>
+                    <button class="btn num">3</button>
+                    <button class="btn op">−</button>
+                    <button class="btn func">%</button>
+                    <button class="btn func">±</button>
+                    <button class="btn num">0</button>
+                    <button class="btn num">.</button>
+                    <button class="btn op">+</button>
+                    <button class="btn equal">=</button>
+                </div>
+            </div>
+        </main>
+    </div>
+    
+    <footer class="footer">
+        <p>&copy; 2026 Derivix. All rights reserved.</p>
+    </footer>
+    <script src="js/script.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/particles.js@2.0.0/particles.js"></script>
+    <script src="js/particles.js"></script>
+    <script>
+        // Function to update time and date every second
+    function updateDateTime() {
+            const now = new Date();
+
+            const time = now.toLocaleTimeString();
+            const date = now.toLocaleDateString(undefined, {
+                weekday: "short",
+                year: "numeric",
+                month: "short",
+                day: "numeric"
+            });
+
+            document.getElementById("time").textContent = time;
+            document.getElementById("date").textContent = date;
+        }
+        // Update date and time every second
+        setInterval(updateDateTime, 1000);
+        updateDateTime();
+        </script>
+</body>
+</html>

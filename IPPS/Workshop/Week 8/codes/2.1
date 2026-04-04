@@ -1,0 +1,12 @@
+try:
+    num1 = int(input("Enter the first integer: "))
+    num2 = int(input("Enter the second integer: "))
+    result = num1 / num2
+except ValueError:
+    print("Invalid input! Please enter integers only.")
+except ZeroDivisionError:
+    print("Error! Division by zero is not allowed.")
+else:
+    print(f"The result of {num1} divided by {num2} is {result}")
+finally:
+    print("Program execution completed.")

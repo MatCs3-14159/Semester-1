@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <title>CALLBACK function</title>
+    </head>
+    <body>
+        <script>
+            function fetchUserData(userId, callback){
+                setTimeout(()=> {
+                    const userData= {
+                        userId:userId,
+                        name:"Hari",
+                        email: "hari@gmail.com",
+                        age: 30
+                    };
+                    callback(userData);
+                },1000);
+            }
+            function displayUSerData(data){
+                console.log(data);
+                console.log("UserID:",data.userId);
+                console.log("Name:",data.name);
+                console.log("Email:",data.email);
+                console.log("Age:",data.age);
+            }
+            fetchUserData(123,displayUSerData);
+        </script>
+    </body>
+</html>

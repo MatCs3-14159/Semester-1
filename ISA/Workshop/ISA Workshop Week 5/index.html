@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>NetPlix</title>
+<script src="https://kit.fontawesome.com/488626c0db.js" crossorigin="anonymous"></script>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<audio id="clickSound" src="https://aqua-charmain-7.tiiny.site/click.mp3"></audio>
+<!-- ================= NAVBAR ================= -->
+<nav class="navbar">
+    <div class="logo">
+        <h1><i class="fa-solid fa-video"></i> NetPlix</h1>
+    </div>
+
+    <ul>
+        <li>Movies 🎥</li>
+        <li>Series 🎬</li>
+        <li>Featured 🎞️</li>
+        <li>For you <i class="fa-solid fa-user"></i></li>
+        <li>Downloads ↓</li>
+    </ul>
+
+    <div class="search-box">
+        <input type="text" id="search-bar" placeholder="Search movies...">
+        <button id="search-btn"><i class="fa fa-search"></i> Search</button>
+    </div>
+
+    <div class="nav-buttons">
+        <button class="login" onclick="clickbtn()"><i class="fa-solid fa-users"></i>Login</button>&nbsp
+        <button class="signup" onclick="clickbtn()"><i class="fa-solid fa-circle-user"></i>Sign Up</button>
+    </div>
+</nav>
+
+<!-- ================= SEARCH ================= -->
+<div class="row">
+    <h2 class="section-title">Search Results</h2><br>
+    <button class="scroll-btn scroll-left" onclick="scrollRow('moviesContainer',-1)">❮</button>
+    <div id="moviesContainer" class="movies"></div>
+    <button class="scroll-btn scroll-right" onclick="scrollRow('moviesContainer',1)">❯</button>
+</div>
+
+<!-- ================= CATEGORIES ================= -->
+<div class="row">
+    <h2 class="section-title">Popular Movies</h2><br>
+    <button class="scroll-btn scroll-left" onclick="scrollRow('popularMovies',-1)">❮</button>
+    <div id="popularMovies" class="movies"></div>
+    <button class="scroll-btn scroll-right" onclick="scrollRow('popularMovies',1)">❯</button>
+</div>
+
+<div class="row">
+    <h2 class="section-title">Action Movies</h2><br>
+    <button class="scroll-btn scroll-left" onclick="scrollRow('actionMovies',-1)">❮</button>
+    <div id="actionMovies" class="movies"></div>
+    <button class="scroll-btn scroll-right" onclick="scrollRow('actionMovies',1)">❯</button>
+</div>
+
+<div class="row">
+    <h2 class="section-title">Fantasy Movies</h2><br>
+    <button class="scroll-btn scroll-left" onclick="scrollRow('fantasyMovies',-1)">❮</button>
+    <div id="fantasyMovies" class="movies"></div>
+    <button class="scroll-btn scroll-right" onclick="scrollRow('fantasyMovies',1)">❯</button>
+</div>
+
+<div class="row">
+    <h2 class="section-title">Sci-Fi Movies</h2><br>
+    <button class="scroll-btn scroll-left" onclick="scrollRow('scifiMovies',-1)">❮</button>
+    <div id="scifiMovies" class="movies"></div>
+    <button class="scroll-btn scroll-right" onclick="scrollRow('scifiMovies',1)">❯</button>
+</div>
+
+<!-- ================= FOOTER ================= -->
+<footer>
+    <div class="footer-container">
+        <div class="footer-left">
+            <h2><i class="fa-solid fa-video"></i> NetPlix <br>(API - <a href="https://www.omdbapi.com">OMDb API - The Open Movie Database</a>)</h2>
+            <p>
+                NetPlix is a modern, visually rich movie discovery web application designed to provide a smooth and engaging user experience. The app allows users to search for movies in real time using the OMDb open API, displaying essential details such as movie posters, titles, and release years. It features predefined movie categories including Popular, Action, Fantasy, and Sci-Fi movies, which are automatically loaded when the page opens. Built using asynchronous JavaScript and the Fetch API, the application retrieves data efficiently without page reloads. The responsive layout, animated movie cards, stylish navigation bar, and intuitive search interface enhance usability across both desktop and mobile devices, making movie exploration fast, interactive, and enjoyable.
+            </p>
+        </div>
+
+        <div class="footer-right">
+            <a href="#" onclick="clickbtn()"><i class="fa-brands fa-facebook"></i></a>
+            <a href="#" onclick="clickbtn()"><i class="fa-brands fa-instagram"></i></a>
+            <a href="#" onclick="clickbtn()"><i class="fa-brands fa-github"></i></a>
+            <a href="#" onclick="clickbtn()"><i class="fa-brands fa-linkedin-in"></i></a>
+        </div>
+    </div>
+    <br>
+    <br>
+    <hr>
+
+    <p class="footerbottom">© 2026 NetPlix | All Rights Reserved</p>
+</footer>
+<!-- ================= SCRIPT ================= -->
+<script src="main.js"></script>
+</body>
+</html>

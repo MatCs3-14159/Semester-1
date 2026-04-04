@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>
+            QUE NUM 3 
+        </title>
+        <style>
+
+        </style>
+    </head>
+    <body>
+        <input type="text" id="nameInput" placeholder="Enter name">
+        <button id="button">Search</button>
+        <script>
+            const sampleobj = [
+                {name:"Bishal",age:26,city:"Salyan"},
+                {name:"Shyam",age:12,city:"kathmandu"},
+                {name:"Ram",age:39,city:"biratnagar"}
+            ];
+            document.getElementById("button").addEventListener("click",function(){
+                const inputval = document.getElementById("nameInput").value.trim();
+                let age = "!!USER NOT FOUND!!";
+                for (let i = 0;i<sampleobj.length;i++){
+                    if (sampleobj[i].name.toLocaleLowerCase() === inputval.toLocaleLowerCase()){
+                        age = sampleobj[i].age;
+                    } 
+                }
+                console.log(`User: ${inputval}, Age: ${age}`);
+                document.getElementById("nameInput").value = "";
+            });
+        </script>
+    </body>
+</html>

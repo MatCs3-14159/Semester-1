@@ -1,0 +1,16 @@
+def find_largest(numbers):
+    try:
+        if len(numbers) == 0:
+            raise ValueError("The list is empty.")
+        largest = max(numbers)
+    except ValueError as ve:
+        print(f"Error: {ve}")
+        return None
+    else:
+        return largest
+    
+nums = [10, 25, 7, 90, 42]
+print("Largest number:", find_largest(nums))
+
+empty_list = []
+print("Largest number:", find_largest(empty_list))

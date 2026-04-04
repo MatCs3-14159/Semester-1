@@ -1,0 +1,13 @@
+def interleave_chars(s1,s2):
+    result = ""
+    line1, line2 = s1.replace(" ",""), s2.replace(" ","")
+    for i in range (min(len(line1),len(line2))):
+        result += line1[i] + line2[i]
+    result += line1[i+1:] + line2[i+1:]
+    return result
+with open("data.txt","r") as file:
+    line1 = file.readline()
+    line2 = file.readline()
+print (interleave_chars(line1,line2))
+    
+        

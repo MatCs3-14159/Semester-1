@@ -1,0 +1,4 @@
+def reduce_spaces(line):
+    return " ".join(line.split())
+line = "This   line    has   extra   space characters"
+print(reduce_spaces(line) + ".")

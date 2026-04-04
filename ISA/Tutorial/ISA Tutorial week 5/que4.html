@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <title>LiST</title>
+        <style>
+
+        </style>
+    </head>
+    <body>
+        <ol id="list">
+            <li>JAVA 1</li>
+            <li>JAVA 2</li>
+            <li>JAVA 3</li>
+            <li>JAVA 4</li>
+            <li>JAVA 5</li>
+        </ol>
+        <script>
+            const items = document.querySelectorAll("#list");
+            for (let i = 0; i<items.length; i++){
+                items[i].style.backgroundColor = "Yellow";
+            }
+            items.forEach(element => {
+                list.style.fontWeight = "bold";
+            });
+            Array.from (items).map(li => 
+                li.innerHTML = `<span>${li.textContent}</span>`
+            );
+        </script>
+    </body>
+</html>

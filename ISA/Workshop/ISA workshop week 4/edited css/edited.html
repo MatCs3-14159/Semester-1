@@ -1,0 +1,137 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+	<title>Workshop 4</title>
+	<style>
+		*{
+			font-family: chalkboard;
+		}
+		body {
+			background-color: #000000;
+			color: #06eef6;
+			text-align: center;
+			background-image: url('maths2.jpg');
+		}
+		#div {
+  			position: relative ;
+    		box-shadow: 0 0 30px #00eaff;
+   			border-radius: 40px;
+   			margin-left: 30%;
+    		margin-right: 30%;
+    		overflow: hidden;
+		}
+		#div::before {
+    		content: "";
+    		position: absolute;
+    		top: 0;
+    		left: 0;
+    		width: 100%;
+    		height: 100%;
+    		background-image: url('maths.jpg');
+    		background-size: cover;
+    		background-position: center;
+    		opacity: 1;
+    		filter: blur(4px);
+    		z-index: -1;
+		}
+		#topic{
+			font-size: 100px;
+			font-style: italic;
+			animation: blink 2s infinite;;
+			text-align: center;
+		}
+		@keyframes blink {
+			0% {opacity: 1;}
+			25% {opacity: 1;}
+			50% {opacity: 0.6;}
+			75%{opacity: 1;}
+			100% {opacity: 1;}
+		}
+		body p{
+			font-size: 30px;
+		}
+		#output{
+			color: #01fbff;
+			text-align: center;
+			padding: 20px;
+			margin: 20px auto 10px auto ;
+			width: 450px;
+		}
+		.button{
+			font-size: 14pt;
+			color: white;
+			background-color: #979693;
+			color: #000000;
+		}
+		.operatorBtn{
+			background-color: #01fbff;
+			color: #000000;
+			font-size: 30px;
+		}
+	</style>
+</head>
+<body><br><br><br><br>
+	<div id="div"><br><div ><h1 id="topic">Math Drills</h1></div>
+	<!-- Math Operator Input -->
+	<p>Select an arithmetic operation (default x):&nbsp</p>
+	<input type="button" class="operatorBtn" value="x" onclick="setOperator('*')">&nbsp
+	<input type="button" class="operatorBtn" value="+" onclick="setOperator('+')">
+	<br><br>
+
+	<!-- Integer Input -->
+	<p>Enter a positive integer value:
+	<input type="text" id="tbInteger"></p>
+
+	<!-- Buttons -->
+	<input type="button" value="Calculate" id= "calbtn" class="button" onclick="calculate()" />&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp
+	<input type="button" value="Clear" id= "clrbtn" class="button" onclick="clearOutput()" /><br>
+
+	<!-- Output -->
+	<div id="output"><br><br></div>
+
+	<!-- Javascript -->
+	<script>
+		let Operator = "*";
+		function setOperator(op){
+			Operator = op;
+		}
+		document.addEventListener("keydown", function(event){
+			if (event.key === "Enter"){
+				document.getElementById("calbtn").click();
+			}
+		});
+		document.addEventListener("keydown",function(event){
+			if (event.key === "Space" || event.key === " "){
+				document.getElementById("clrbtn").click();
+			}
+		})
+		function calculate() {
+			let integer = parseInt(document.getElementById("tbInteger").value);
+			let output = document.getElementById("output");
+
+			if (integer <1 || isNaN(integer)){
+				alert("Enter only positive integer.");
+				document.getElementById("tbInteger").value = "";
+				return;
+			}
+			let result = "";
+
+			for (let i = 1;i<=10;i++){
+				if (Operator == "*"){
+					result += `${integer} * ${i} = ${integer * i}<br>`;
+				} else if (Operator == "+") {
+					result += `${integer} + ${i} = ${integer + i}<br>`;
+				} else {
+					alert ("Please use + or * operator only.");
+		 			return;
+				}
+			}
+			output.innerHTML = result;
+		}
+		function clearOutput() {
+			document.getElementById("tbInteger").value = "";
+			document.getElementById("output").innerHTML ="";
+		}
+	</script>
+</body>
+</html>

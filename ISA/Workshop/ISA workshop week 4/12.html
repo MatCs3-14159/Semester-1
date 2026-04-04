@@ -1,0 +1,883 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no" />
+<title>Vector Zombies — 2.5D Mobile Fight</title>
+<style>
+  :root{
+    --bg1:#88d8f7;
+    --bg2:#6fbce6;
+    --accent:#ffb347;
+    --ui:#0b1722;
+  }
+  html,body{height:100%;margin:0;font-family:Inter,system-ui,Arial;background:linear-gradient(180deg,var(--bg1),var(--bg2));-webkit-tap-highlight-color:transparent;}
+  #wrap{display:flex;flex-direction:column;height:100vh;align-items:center;justify-content:flex-start;gap:6px;padding:8px;box-sizing:border-box;}
+  header{width:100%;display:flex;justify-content:space-between;align-items:center;color:var(--ui);padding:4px 8px;box-sizing:border-box}
+  h1{font-size:16px;margin:0}
+  #gameArea{position:relative;width:100%;max-width:1080px;flex:1;display:flex;align-items:center;justify-content:center;}
+  canvas{display:block;width:100%;height:100%;border-radius:12px;box-shadow:0 18px 40px rgba(12,18,28,0.25);background:transparent;}
+  /* Mobile controls area */
+  #controls{width:100%;max-width:1080px;display:flex;justify-content:space-around;align-items:center;gap:8px;padding:8px;box-sizing:border-box;}
+  .btn{
+    background:linear-gradient(180deg, rgba(255,255,255,0.06), rgba(0,0,0,0.03));
+    border:2px solid rgba(11,23,34,0.12);
+    color:var(--ui);
+    font-weight:700;
+    flex:1;
+    min-height:56px;
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    border-radius:12px;
+    box-shadow:0 6px 18px rgba(10,20,30,0.12);
+    user-select:none;
+    -webkit-user-select:none;
+    touch-action: none;
+  }
+  .btn.small{flex:0 0 110px}
+  .cooldown{font-size:11px;opacity:0.8;margin-top:6px;color:rgba(11,23,34,0.7)}
+  #hud{position:absolute;left:12px;top:12px;color:var(--ui);background:rgba(255,255,255,0.6);padding:8px;border-radius:10px;font-weight:600;box-shadow:0 6px 18px rgba(10,20,30,0.12)}
+  #minimap{position:absolute;right:12px;top:12px;border-radius:8px;overflow:hidden;background:rgba(255,255,255,0.14);padding:4px}
+  small{display:block;font-weight:500;opacity:0.85}
+  @media (max-width:520px){
+    .btn.small{flex:1}
+    .btn{min-height:48px;font-size:14px}
+    h1{font-size:14px}
+    #hud{font-size:13px}
+  }
+</style>
+</head>
+<body>
+<div id="wrap">
+  <header>
+    <h1>Vector Zombies — 2.5D Fight (Cartoon Vector)</h1>
+    <div style="font-size:13px;color:rgba(11,23,34,0.7)">Mode: 2.5D • Touch Buttons</div>
+  </header>
+
+  <div id="gameArea">
+    <canvas id="c"></canvas>
+    <div id="hud">
+      <div>HP: <span id="hp">100</span></div>
+      <div>Score: <span id="score">0</span></div>
+      <div style="margin-top:6px"><small>Grenade: <span id="grenadeCd">Ready</span></small><small>Super: <span id="superCd">Ready</span></small></div>
+    </div>
+    <canvas id="minimap" width="220" height="120" style="width:220px;height:120px;display:block"></canvas>
+  </div>
+
+  <!-- Touch buttons: Move left/right, Punch, Fire, Pickup/Throw, Grenade, Super -->
+  <div id="controls">
+    <div class="btn small" id="btnLeft">◀</div>
+    <div class="btn small" id="btnRight">▶</div>
+    <div class="btn" id="btnPunch">Punch<div class="cooldown" id="cdPunch"></div></div>
+    <div class="btn" id="btnFire">Fire<div class="cooldown" id="cdFire"></div></div>
+    <div class="btn" id="btnPick">Pick/Throw<div class="cooldown" id="cdPick"></div></div>
+    <div class="btn small" id="btnGrenade">Grenade<div class="cooldown" id="cdGrenade"></div></div>
+    <div class="btn small" id="btnSuper">Super<div class="cooldown" id="cdSuper"></div></div>
+  </div>
+</div>
+
+<script>
+/* ============================================================
+   Vector Zombies — Mobile 2.5D Cartoon Vector Game
+   - Cartoon vector art drawn procedurally (no external assets)
+   - 2.5D Faux depth: zombies spawn with depth (scale + y offset)
+   - Abilities: punch, fire projectile, pick & throw, grenade (10s), super fire (15s)
+   - Wave-based spawns: number & speed increase per wave
+   - Touch buttons for mobile; supports mouse for desktop testing
+   - OOP classes: Game, Hero, Zombie, Projectile, Particle, Input
+   - Tunable parameters throughout
+   ============================================================ */
+
+/* ---------------------------
+   Canvas & high-dpi handling
+   --------------------------- */
+const canvas = document.getElementById('c');
+const ctx = canvas.getContext('2d');
+const minimap = document.getElementById('minimap');
+const mmCtx = minimap.getContext('2d');
+let DPR = Math.min(window.devicePixelRatio || 1, 2);
+
+function resize(){
+  const container = canvas.parentElement;
+  const w = Math.min(1080, window.innerWidth - 16);
+  const h = Math.max(520, Math.floor((window.innerHeight - 200)));
+  canvas.style.width = w + 'px';
+  canvas.style.height = h + 'px';
+  canvas.width = Math.floor(w * DPR);
+  canvas.height = Math.floor(h * DPR);
+  ctx.setTransform(DPR,0,0,DPR,0,0);
+}
+window.addEventListener('resize', resize);
+resize();
+
+/* -------------------
+   Utility functions
+   ------------------- */
+const rand = (a,b)=> a + Math.random()*(b-a);
+const clamp = (v,a,b)=>Math.max(a,Math.min(b,v));
+const now = ()=> performance.now()/1000;
+
+/* -------------------
+   Game parameters
+   ------------------- */
+const WORLD = {
+  width: 4000,
+  height: 1200,
+  groundY: 920,       // y coordinate of ground baseline
+  parallax: 0.6
+};
+const SPAWN = {
+  baseInterval: 1400, // ms between spawns early
+  spawnIncreasePerWave: 0.85,
+  waveDuration: 20    // seconds per wave
+};
+
+/* -------------------
+   Input manager (touch + mouse)
+   ------------------- */
+class Input {
+  constructor(){
+    this.left = false; this.right = false;
+    this.punch = false; this.fire=false; this.pick=false; this.grenade=false; this.super=false;
+    this._bindButtons();
+  }
+  _bindButtons(){
+    const bind = (id, prop)=>{
+      const el = document.getElementById(id);
+      // touchstart / mousedown
+      el.addEventListener('pointerdown', e=>{ e.preventDefault(); this[prop]=true; });
+      el.addEventListener('pointerup', e=>{ e.preventDefault(); this[prop]=false; });
+      el.addEventListener('pointerleave', e=>{ this[prop]=false; });
+      // also support touchcancel
+      el.addEventListener('touchcancel', e=>{ this[prop]=false; });
+    };
+    bind('btnLeft','left'); bind('btnRight','right');
+    bind('btnPunch','punch'); bind('btnFire','fire'); bind('btnPick','pick');
+    bind('btnGrenade','grenade'); bind('btnSuper','super');
+    // desktop keyboard fallback
+    window.addEventListener('keydown', e=>{
+      if (e.key==='ArrowLeft' || e.key==='a') this.left=true;
+      if (e.key==='ArrowRight' || e.key==='d') this.right=true;
+      if (e.key==='q') this.punch=true;
+      if (e.key==='e') this.fire=true;
+      if (e.key==='r') this.pick=true;
+      if (e.key==='g') this.grenade=true;
+      if (e.key==='f') this.super=true;
+    });
+    window.addEventListener('keyup', e=>{
+      if (e.key==='ArrowLeft' || e.key==='a') this.left=false;
+      if (e.key==='ArrowRight' || e.key==='d') this.right=false;
+      if (e.key==='q') this.punch=false;
+      if (e.key==='e') this.fire=false;
+      if (e.key==='r') this.pick=false;
+      if (e.key==='g') this.grenade=false;
+      if (e.key==='f') this.super=false;
+    });
+  }
+}
+
+/* -------------------
+   Particle system (sparks, blood, smoke)
+   ------------------- */
+class Particle {
+  constructor(x,y,vx,vy,life,size,color){
+    this.x=x; this.y=y; this.vx=vx; this.vy=vy; this.life=life; this.alive=life; this.size=size; this.color=color;
+  }
+  update(dt){
+    this.alive -= dt;
+    if(this.alive<=0) return;
+    this.vy += 1000 * dt; // gravity
+    this.x += this.vx * dt;
+    this.y += this.vy * dt;
+    this.size *= 0.98;
+  }
+  draw(ctx,cam){
+    if(this.alive<=0) return;
+    ctx.globalAlpha = Math.max(0, this.alive/this.life);
+    ctx.fillStyle = this.color;
+    ctx.beginPath();
+    ctx.ellipse(this.x-cam.x, this.y-cam.y, this.size, this.size*0.8, 0,0,Math.PI*2);
+    ctx.fill();
+    ctx.globalAlpha = 1;
+  }
+}
+
+/* -------------------
+   Projectile (hero fire & super)
+   ------------------- */
+class Projectile {
+  constructor(x,y,vx,vy,damage,life,color, radius=8){
+    this.x=x; this.y=y; this.vx=vx; this.vy=vy;
+    this.damage=damage; this.life=life; this.alive=life; this.color=color; this.r = radius;
+    this.from = 'hero';
+  }
+  update(dt){
+    this.alive -= dt;
+    if(this.alive<=0) return;
+    this.vy += 1400 * dt; // gravity arc for some projectiles
+    this.x += this.vx * dt;
+    this.y += this.vy * dt;
+  }
+  draw(ctx,cam){
+    if(this.alive<=0) return;
+    // soft glow
+    const sx = this.x - cam.x, sy = this.y - cam.y;
+    ctx.beginPath();
+    ctx.fillStyle = this.color;
+    ctx.arc(sx, sy, this.r, 0, Math.PI*2);
+    ctx.fill();
+  }
+}
+
+/* -------------------
+   Zombie class
+   ------------------- */
+class Zombie {
+  constructor(x,zDepth, speed, hp){
+    this.x = x;               // world x
+    this.z = zDepth;          // depth (0 near, 1 far)
+    this.baseY = WORLD.groundY;
+    this.speed = speed * (0.6 + (1-this.z)*1.2); // nearer are faster visually
+    this.hp = hp;
+    this.maxHp = hp;
+    this.width = 64; // base width, scaled by depth
+    this.height = 96;
+    this.state = 'walk';
+    this.picked = false;
+    this.attackCooldown = rand(0.6,1.6);
+    // color hue variant
+    this.hue = Math.floor(rand(100,160));
+  }
+  get screenY(){
+    // faux-3D: further zombies are higher (closer to horizon)
+    const base = this.baseY - (1 - this.z) * 140 - (this.height * (1 - this.z));
+    return base;
+  }
+  get scale(){
+    // near z=0 => 1.0, far z=1 => 0.5
+    return 0.6 + (1 - this.z) * 0.9;
+  }
+  update(dt, hero){
+    if(this.picked) return; // carried
+    // simple AI: move left toward hero.x
+    const dir = (this.x > hero.x + 10) ? -1 : 1;
+    this.x += dir * this.speed * dt;
+    // slow down a bit if very close
+    if(Math.abs(this.x - hero.x) < 80) this.speed *= 0.98;
+    // attack hero if overlapping
+    this.attackCooldown -= dt;
+    if(this.attackCooldown <= 0 && Math.abs(this.x - hero.x) < 64 && Math.abs(this.screenY - hero.y) < 40){
+      this.attackCooldown = rand(0.9,1.6);
+      hero.takeDamage(6);
+      // particle
+    }
+  }
+  takeDamage(d){
+    this.hp -= d;
+  }
+  draw(ctx, cam){
+    const sx = this.x - cam.x;
+    const sy = this.screenY - cam.y;
+    const sc = this.scale;
+    ctx.save();
+    ctx.translate(sx, sy);
+    ctx.scale(sc, sc);
+    // shadow
+    ctx.beginPath();
+    ctx.fillStyle = 'rgba(0,0,0,0.18)';
+    ctx.ellipse(0, this.height*0.48, this.width*0.6, this.width*0.22, 0, 0, Math.PI*2);
+    ctx.fill();
+    // body
+    ctx.translate(0, -this.height*0.25);
+    // torso
+    ctx.fillStyle = `hsl(${this.hue}, 55%, 45%)`;
+    roundRect(ctx, -this.width*0.35, -this.height*0.05, this.width*0.7, this.height*0.5, 12);
+    ctx.fill();
+    // head
+    ctx.beginPath();
+    ctx.fillStyle = `hsl(${this.hue-10}, 40%, 70%)`;
+    ctx.ellipse(0, -this.height*0.4, this.width*0.25, this.width*0.26, 0, 0, Math.PI*2);
+    ctx.fill();
+    // eyes
+    ctx.fillStyle='white'; ctx.fillRect(-10,-this.height*0.44,6,6); ctx.fillRect(6,-this.height*0.44,6,6);
+    ctx.fillStyle='black'; ctx.fillRect(-8,-this.height*0.42,2,2); ctx.fillRect(8,-this.height*0.42,2,2);
+    // arm left
+    ctx.fillStyle = `hsl(${this.hue-5}, 60%, 50%)`;
+    ctx.beginPath();
+    ctx.roundRect(-this.width*0.38, -this.height*0.05, 12, this.height*0.34, 8);
+    ctx.fill();
+    // arm right
+    ctx.beginPath();
+    ctx.roundRect(this.width*0.26, -this.height*0.05, 12, this.height*0.34, 8);
+    ctx.fill();
+    // blood tint when damaged
+    if(this.hp < this.maxHp * 0.5){
+      ctx.fillStyle = 'rgba(200,30,30,0.12)';
+      ctx.fillRect(-this.width*0.35, -this.height*0.05, this.width*0.7, this.height*0.5);
+    }
+    // hp bar
+    const pct = clamp(this.hp / this.maxHp, 0, 1);
+    ctx.fillStyle = 'rgba(0,0,0,0.4)';
+    roundRect(ctx, -this.width*0.32, -this.height*0.65, this.width*0.64, 8, 6); ctx.fill();
+    ctx.fillStyle = 'lime';
+    roundRect(ctx, -this.width*0.32, -this.height*0.65, this.width*0.64 * pct, 8, 6); ctx.fill();
+    ctx.restore();
+  }
+}
+
+/* -------------------
+   Hero class
+   ------------------- */
+class Hero {
+  constructor(){
+    this.x = 260;
+    this.y = WORLD.groundY - 120; // base y for hero feet
+    this.w = 80; this.h = 120;
+    this.vx = 0; this.vy = 0;
+    this.speed = 360; // px per second
+    this.hp = 100; this.maxHp = 100;
+    this.pickCarry = null; // zombie object picked
+    // cooldowns
+    this.cool = {
+      punch: 0,
+      fire: 0,
+      pick: 0,
+      grenade: 0,
+      super: 0
+    };
+    // ability specs
+    this.specs = {
+      punchDamage: 25,
+      fireDamage: 26,
+      superDamage: 120,
+      pickDamageThrow: 60,
+      grenadeDamage: 110
+    };
+    this.facing = 1; // 1 right, -1 left
+  }
+  update(dt, input){
+    // move left/right
+    const prevX = this.x;
+    if(input.left) { this.vx = -this.speed; this.facing = -1; }
+    else if(input.right) { this.vx = this.speed; this.facing = 1; }
+    else { this.vx = 0; }
+    this.x += this.vx * dt;
+    // clamp to world bounds
+    this.x = clamp(this.x, 60, WORLD.width - 60);
+    // update cooldowns
+    for(let k in this.cool) this.cool[k] = Math.max(0, this.cool[k] - dt);
+  }
+  punch(zombies, particles){
+    if(this.cool.punch > 0) return;
+    this.cool.punch = 0.45; // seconds
+    // detect nearby zombies within range and similar depth
+    for(let z of zombies){
+      if(z.picked) continue;
+      if(Math.abs(z.x - this.x) < 90 && Math.abs(z.screenY - this.y) < 80){
+        z.takeDamage(this.specs.punchDamage);
+        spawnHitParticles(z.x, z.screenY, particles, '#ff9f9f');
+      }
+    }
+  }
+  fire(projectiles){
+    if(this.cool.fire > 0) return;
+    this.cool.fire = 0.42;
+    // spawn a projectile with small arc
+    const speed = 880;
+    const dir = this.facing;
+    const px = this.x + dir * 40;
+    projectiles.push(new Projectile(px, this.y - 30, speed * dir, -160, this.specs.fireDamage, 2.2, '#ffd27a', 12));
+  }
+  pickOrThrow(zombies, projectiles, particles){
+    if(this.cool.pick > 0) return;
+    this.cool.pick = 0.35;
+    if(this.pickCarry){
+      // throw carried zombie as heavy projectile
+      const z = this.pickCarry;
+      z.picked = false;
+      const throwSpeed = 680;
+      // create a projectile representing thrown zombie (damage on impact)
+      projectiles.push(new Projectile(this.x + this.facing*40, this.y - 40, throwSpeed*this.facing, -200, this.specs.pickDamageThrow, 2.0, '#d1c0ff', 14));
+      this.pickCarry = null;
+      spawnThrowParticles(this.x, this.y-40, particles);
+      return;
+    }
+    // attempt to pick nearest zombie
+    for(let z of zombies){
+      if(z.picked) continue;
+      if(Math.abs(z.x - this.x) < 86 && Math.abs(z.screenY - this.y) < 80){
+        z.picked = true;
+        this.pickCarry = z;
+        spawnPickupParticles(z.x, z.screenY, particles);
+        break;
+      }
+    }
+  }
+  grenade(projectiles){
+    if(this.cool.grenade > 0) return;
+    this.cool.grenade = 10.0; // seconds
+    // grenade arcs (splash damage)
+    const dir = this.facing;
+    const px = this.x + dir * 40;
+    projectiles.push(new Projectile(px, this.y - 30, 520 * dir, -420, this.specs.grenadeDamage, 2.2, '#ff9b5a', 14));
+  }
+  superFire(projectiles){
+    if(this.cool.super > 0) return;
+    this.cool.super = 15.0;
+    // multi-directional powerful shots: three projectiles fan
+    const dir = this.facing;
+    const baseX = this.x + dir*40;
+    projectiles.push(new Projectile(baseX, this.y - 30, 1100 * dir, -80, this.specs.superDamage*0.6, 2.4, '#ffdf6b', 14));
+    projectiles.push(new Projectile(baseX, this.y - 30, 900 * dir, -260, this.specs.superDamage*0.8, 2.4, '#ffb76b', 14));
+    projectiles.push(new Projectile(baseX, this.y - 30, 700 * dir, -420, this.specs.superDamage, 2.4, '#ff8a6b', 14));
+  }
+  takeDamage(d){
+    this.hp -= d;
+    // clamp
+    this.hp = Math.max(0, this.hp);
+    // spawn hurt particles handled externally
+  }
+  draw(ctx, cam){
+    // draw hero vector art with 2.5D shading
+    const sx = this.x - cam.x;
+    const sy = this.y - cam.y;
+    const sc = 1.0;
+    ctx.save();
+    ctx.translate(sx, sy);
+    ctx.scale(sc, sc);
+    // shadow
+    ctx.beginPath(); ctx.fillStyle='rgba(0,0,0,0.18)'; ctx.ellipse(0, this.h*0.42, this.w*0.72, this.w*0.2, 0, 0, Math.PI*2); ctx.fill();
+    // body
+    ctx.translate(0, -this.h*0.25);
+    // torso
+    ctx.fillStyle = '#3466ff';
+    roundRect(ctx, -this.w*0.32, -this.h*0.02, this.w*0.64, this.h*0.5, 14); ctx.fill();
+    // head
+    ctx.beginPath(); ctx.fillStyle='#ffd9b3'; ctx.ellipse(0, -this.h*0.42, this.w*0.22, this.w*0.24, 0, 0, Math.PI*2); ctx.fill();
+    // eye
+    ctx.fillStyle='white'; ctx.fillRect(-8,-this.h*0.45,6,6); ctx.fillRect(6,-this.h*0.45,6,6);
+    // arm (left)
+    ctx.fillStyle='#2f57d9'; ctx.beginPath(); ctx.roundRect(-this.w*0.38, -this.h*0.02, 12, this.h*0.38, 8); ctx.fill();
+    // arm (right)
+    ctx.beginPath(); ctx.roundRect(this.w*0.26, -this.h*0.02, 12, this.h*0.38, 8); ctx.fill();
+    // belt
+    ctx.fillStyle='#243a7a'; ctx.fillRect(-this.w*0.32, this.h*0.22 - this.h*0.25, this.w*0.64, 12);
+    // carried zombie indicator
+    if(this.pickCarry){
+      ctx.fillStyle = 'rgba(0,0,0,0.08)';
+      roundRect(ctx, -28, -this.h*0.7, 56, 26, 10); ctx.fill();
+    }
+    ctx.restore();
+  }
+}
+
+/* -------------------
+   Camera (follows hero with lookahead)
+   ------------------- */
+class Camera {
+  constructor(w,h){
+    this.x = 0; this.y = 0; this.w = w; this.h = h;
+    this.lerp = 0.14;
+  }
+  follow(target){
+    const lookAhead = target.vx * 0.08;
+    const tx = target.x - this.w/2 + lookAhead;
+    this.x += (tx - this.x) * this.lerp;
+    this.x = clamp(this.x, 0, WORLD.width - this.w);
+    // vertical locked to ground for simplicity
+    this.y = 0;
+  }
+}
+
+/* -------------------
+   Misc helpers
+   ------------------- */
+function roundRect(ctx,x,y,w,h,r){
+  if (w < 2*r) r = w/2; if (h < 2*r) r = h/2;
+  ctx.beginPath();
+  ctx.moveTo(x+r,y);
+  ctx.arcTo(x+w,y,x+w,y+h,r);
+  ctx.arcTo(x+w,y+h,x,y+h,r);
+  ctx.arcTo(x,y+h,x,y,r);
+  ctx.arcTo(x,y,x+w,y,r);
+  ctx.closePath();
+}
+
+/* particle spawners */
+function spawnHitParticles(x,y, particles, color='#ff7a7a'){
+  for(let i=0;i<12;i++){
+    particles.push(new Particle(x + rand(-12,12), y + rand(-8,8), rand(-220,220), rand(-180, -60), rand(0.4,0.9), rand(3,8), color));
+  }
+}
+function spawnThrowParticles(x,y, particles){
+  for(let i=0;i<18;i++) particles.push(new Particle(x+rand(-16,16), y+rand(-8,8), rand(-320,320), rand(-260,-80), rand(0.6,1.1), rand(4,10), '#cfaaff'));
+}
+function spawnPickupParticles(x,y, particles){
+  for(let i=0;i<8;i++) particles.push(new Particle(x+rand(-12,12), y+rand(-6,6), rand(-80,80), rand(-140,-40), 0.8, rand(2,5), '#e0f7ff'));
+}
+
+/* -------------------
+   Game class
+   ------------------- */
+class Game {
+  constructor(){
+    this.input = new Input();
+    this.hero = new Hero();
+    this.camera = new Camera(canvas.width / DPR, canvas.height / DPR);
+    this.zombies = [];
+    this.projectiles = [];
+    this.particles = [];
+    this.lastSpawn = 0;
+    this.spawnInterval = SPAWN.baseInterval; // ms
+    this.waveStart = now();
+    this.wave = 1;
+    this.time = 0;
+    this.score = 0;
+    this.running = true;
+    this.initUI();
+    this.initWorld();
+    this._lastTime = now();
+    this._loop();
+  }
+  initUI(){
+    this.hpEl = document.getElementById('hp');
+    this.scoreEl = document.getElementById('score');
+    this.grenadeCdEl = document.getElementById('grenadeCd');
+    this.superCdEl = document.getElementById('superCd');
+    // cooldown element placeholders
+    this.cdEls = {
+      punch: document.getElementById('cdPunch'),
+      fire: document.getElementById('cdFire'),
+      pick: document.getElementById('cdPick'),
+      grenade: document.getElementById('cdGrenade'),
+      super: document.getElementById('cdSuper')
+    };
+  }
+  initWorld(){
+    // create initial wave zombies spread across world edge
+    this.zombies = [];
+    this.spawnWave(this.wave);
+    // minimap scaling
+    minimap.width = 220; minimap.height = 120;
+    mmCtx.setTransform(1,0,0,1,0,0);
+    mmCtx.imageSmoothingEnabled = false;
+  }
+  spawnWave(wave){
+    // determine number and intensity by wave
+    const baseCount = Math.floor(3 + wave * 1.4);
+    for(let i=0;i<baseCount;i++){
+      // spawn at right edge (world width + spacing)
+      const depth = rand(0.15, 0.92);
+      const speed = rand(40 + wave*12, 90 + wave*24);
+      const hp = Math.floor(40 + wave*12 + rand(-6,20));
+      const x = WORLD.width + rand(100, 800) + i*rand(40, 260);
+      this.zombies.push(new Zombie(x, depth, speed, hp));
+    }
+    this.waveStart = now();
+    // slightly shorten spawnInterval each wave to increase chaos
+    this.spawnInterval = Math.max(400, SPAWN.baseInterval * Math.pow(SPAWN.spawnIncreasePerWave, wave-1));
+  }
+  spawnZombieSingle(){
+    const depth = rand(0.15, 0.92);
+    const speed = rand(50 + this.wave*8, 100 + this.wave*18);
+    const hp = Math.floor(35 + this.wave*9 + rand(-6,16));
+    const x = WORLD.width + rand(40, 180);
+    this.zombies.push(new Zombie(x, depth, speed, hp));
+  }
+  _loop(){
+    if(!this.running) return;
+    const t = now();
+    const dt = Math.min(0.033, t - this._lastTime);
+    this._lastTime = t;
+    this.update(dt);
+    this.draw();
+    requestAnimationFrame(()=>this._loop());
+  }
+  update(dt){
+    // update time and wave logic
+    this.time += dt;
+    // wave progression
+    if(now() - this.waveStart > SPAWN.waveDuration){
+      this.wave++;
+      this.spawnWave(this.wave);
+    }
+    // occasional single zombie spawns between waves to increase threat
+    if(Math.random() < dt * 0.8 * (0.3 + this.wave*0.06)) this.spawnZombieSingle();
+
+    // hero actions based on input and cooldowns
+    // handle pressed actions as triggers (instant) - for mobile pointerdown holds we treat as continuous but abilities mostly instant
+    const inp = this.input;
+    this.hero.update(dt, inp);
+
+    // abilities: detect rising edge - we approximate by using boolean and checking cooldowns 
+        // then resetting input to false (so user must release)
+    if (inp.punch) { 
+         this.hero.punch(this.zombies, this.particles); 
+         inp.punch = false; 
+    }
+    if (inp.fire) { 
+        this.hero.fire(this.projectiles); 
+        inp.fire = false; 
+    }
+    if (inp.pick) { 
+         this.hero.pickOrThrow(this.zombies, this.projectiles, this.particles); 
+         inp.pick = false; 
+    }
+    if (inp.grenade) { 
+        this.hero.grenade(this.projectiles); 
+        inp.grenade = false; 
+    }
+    if (inp.super) { 
+        this.hero.superFire(this.projectiles); 
+        inp.super = false; 
+    }
+
+
+    // update zombies
+    for(let z of this.zombies) z.update(dt, this.hero);
+
+    // update projectiles
+    for(let p of this.projectiles){ p.update(dt); }
+
+    // update particles
+    for(let i=this.particles.length-1;i>=0;i--){
+      const p = this.particles[i]; p.update(dt);
+      if(p.alive <= 0) this.particles.splice(i,1);
+    }
+
+    // collisions: projectiles vs zombies
+    for(let i=this.projectiles.length-1;i>=0;i--){
+      const pr = this.projectiles[i];
+      if(pr.alive <= 0) { this.projectiles.splice(i,1); continue; }
+      // check against zombies
+      for(let j=this.zombies.length-1;j>=0;j--){
+        const z = this.zombies[j];
+        if(z.picked) continue;
+        // compute distance in world coords; adjust for z depth scale for collision radius
+        const dz = Math.abs(z.x - pr.x);
+        const dr = 32 * z.scale + pr.r;
+        if(dz < dr && Math.abs(z.screenY - pr.y) < 90){
+          // hit
+          z.takeDamage(pr.damage);
+          // spawn particles
+          spawnHitParticles(z.x, z.screenY, this.particles, '#ffa0a0');
+          // detonating projectile for grenade or big hits
+          if(pr.damage > 80 || pr.color === '#ff9b5a'){
+            // splash: damage nearby zombies
+            for(let k=0;k<this.zombies.length;k++){
+              const z2 = this.zombies[k];
+              const dist = Math.abs(z2.x - pr.x);
+              if(dist < 220) { z2.takeDamage(pr.damage * 0.8 ); }
+            }
+          }
+          pr.alive = 0; // mark projectile dead
+          break;
+        }
+      }
+    }
+
+    // check hero collisions with zombies (walking into hero)
+    for(let z of this.zombies){
+      if(z.picked) continue;
+      const dist = Math.abs(z.x - this.hero.x);
+      if(dist < 52 && Math.abs(z.screenY - this.hero.y) < 80){
+        // damaging handled inside Zombie.update() attack cooldown
+      }
+    }
+
+    // remove dead zombies and convert into corpses or particles
+    for(let i=this.zombies.length-1;i>=0;i--){
+      const z = this.zombies[i];
+      if(z.hp <= 0){
+        // award score based on depth (nearer = higher score)
+        this.score += Math.floor(20 + (1 - z.z) * 30);
+        // spawn gore particles
+        for(let p=0;p<18;p++){
+          this.particles.push(new Particle(z.x + rand(-20,20), z.screenY + rand(-10,10), rand(-280,280), rand(-420,-120), rand(0.8,1.6), rand(4,10), '#ff7a7a'));
+        }
+        this.zombies.splice(i,1);
+      }
+    }
+
+    // move carried zombie with hero
+    if(this.hero.pickCarry){
+      const z = this.hero.pickCarry;
+      z.x = this.hero.x + this.hero.facing * 20;
+      z.picked = true;
+    }
+
+    // update camera to follow hero
+    this.camera.follow(this.hero);
+
+    // update HUD & cooldown text
+    this.hpEl.innerText = Math.max(0, Math.floor(this.hero.hp));
+    this.scoreEl.innerText = this.score;
+    this.grenadeCdEl.innerText = this.hero.cool.grenade <= 0 ? 'Ready' : this.hero.cool.grenade.toFixed(1) + 's';
+    this.superCdEl.innerText = this.hero.cool.super <= 0 ? 'Ready' : this.hero.cool.super.toFixed(1) + 's';
+    // show short cds for action buttons
+    this.cdEls.punch.innerText = this.hero.cool.punch > 0 ? this.hero.cool.punch.toFixed(1)+'s' : '';
+    this.cdEls.fire.innerText = this.hero.cool.fire > 0 ? this.hero.cool.fire.toFixed(1)+'s' : '';
+    this.cdEls.pick.innerText = this.hero.cool.pick > 0 ? this.hero.cool.pick.toFixed(1)+'s' : '';
+    this.cdEls.grenade.innerText = this.hero.cool.grenade > 0 ? this.hero.cool.grenade.toFixed(1)+'s' : '';
+    this.cdEls.super.innerText = this.hero.cool.super > 0 ? this.hero.cool.super.toFixed(1)+'s' : '';
+
+    // world bounds cleanup for projectiles
+    for(let i=this.projectiles.length-1;i>=0;i--){
+      const p = this.projectiles[i];
+      if(p.x < -200 || p.x > WORLD.width + 200 || p.y > WORLD.height + 400 || p.alive <= 0) this.projectiles.splice(i,1);
+    }
+
+    // if hero died -> reset (or you can implement gameover)
+    if(this.hero.hp <= 0){
+      this.running = false;
+      setTimeout(()=> this.reset(), 800);
+    }
+  }
+  reset(){
+    // simple reset: reinitialize everything
+    this.hero = new Hero();
+    this.zombies = [];
+    this.projectiles = [];
+    this.particles = [];
+    this.wave = 1;
+    this.score = 0;
+    this.spawnInterval = SPAWN.baseInterval;
+    this.initWorld();
+    this.running = true;
+    this._lastTime = now();
+    this._loop();
+  }
+  draw(){
+    // clear (draw sky + parallax background)
+    const w = canvas.width / DPR, h = canvas.height / DPR;
+    ctx.clearRect(0,0, w, h);
+
+    // parallax layers: far sky shapes and clouds
+    drawParallaxBackground(ctx, this.camera);
+
+    // ground plane (big rectangle with pattern)
+    drawGround(ctx, this.camera);
+
+    // draw zombies sorted by depth (farthest first -> smaller), so overlapping looks correct
+    const zombiesSorted = this.zombies.slice().sort((a,b)=> b.z - a.z);
+    for(let z of zombiesSorted) z.draw(ctx, this.camera);
+
+    // draw hero (on top of far zombies but behind nearer ones to imply depth)
+    // however to create 2.5D layering, draw hero then near zombies
+    this.hero.draw(ctx, this.camera);
+
+    // projectiles & particles above everything
+    for(let p of this.projectiles) p.draw(ctx, this.camera);
+    for(let p of this.particles) p.draw(ctx, this.camera);
+
+    // HUD overlays: simple vignette and UI elements drawn already in DOM
+    // draw minimap
+    this.drawMinimap();
+  }
+  drawMinimap(){
+    const mmW = minimap.width, mmH = minimap.height;
+    mmCtx.clearRect(0,0,mmW,mmH);
+    // background
+    mmCtx.fillStyle = 'rgba(10,20,38,0.08)';
+    mmCtx.fillRect(0,0,mmW,mmH);
+    // scale
+    const sx = mmW / WORLD.width, sy = mmH / WORLD.height;
+    // ground line
+    mmCtx.fillStyle = '#2b6fb1';
+    mmCtx.fillRect(0, mmH - 12, mmW, 12);
+    // hero dot
+    mmCtx.fillStyle = '#00d4ff';
+    mmCtx.fillRect(this.hero.x * sx - 3, (WORLD.groundY - 40) * sy - 3, 6,6);
+    // zombies
+    for(let z of this.zombies){
+      mmCtx.fillStyle = z.hp > z.maxHp*0.5 ? '#9fe08f' : '#ff8a8a';
+      mmCtx.fillRect(z.x * sx - 2, (z.screenY) * sy - 2, 4,4);
+    }
+  }
+}
+
+/* -------------------
+   Background & ground drawing (vector)
+   ------------------- */
+function drawParallaxBackground(ctx, camera){
+  const cw = canvas.width / DPR, ch = canvas.height / DPR;
+  // sky gradient (top to horizon)
+  const g = ctx.createLinearGradient(0,0,0,ch);
+  g.addColorStop(0, '#bfe8ff');
+  g.addColorStop(0.6, '#9fd8f7');
+  g.addColorStop(1, '#83c8ee');
+  ctx.fillStyle = g; ctx.fillRect(0,0,cw,ch);
+
+  // soft distant hills
+  for(let i=0;i<3;i++){
+    const par = 0.12 + i*0.18;
+    ctx.beginPath();
+    ctx.moveTo(-200, ch);
+    const step = 120;
+    for(let x= -step; x<=cw + step; x+=step){
+      const worldX = camera.x * par + x * (1/par);
+      const y = ch - 60 - (Math.sin(worldX*0.001 + i) * (120 + i*40));
+      ctx.lineTo(x, y);
+    }
+    ctx.lineTo(cw + 200, ch);
+    ctx.closePath();
+    ctx.fillStyle = `rgba(80,120,160, ${0.08 + i*0.04})`;
+    ctx.fill();
+  }
+
+  // large clouds layer
+  ctx.save(); ctx.globalAlpha = 0.9;
+  for(let i=0;i<8;i++){
+    const px = ((i*400 - (camera.x*0.2 % 1200)) % (cw + 600)) - 300;
+    const py = 120 + (i%2)*30 + Math.sin((camera.x*0.0005 + i)*2) * 20;
+    drawCloud(ctx, px, py, 180 + (i%3)*60);
+  }
+  ctx.restore();
+}
+
+function drawCloud(ctx,x,y,size){
+  ctx.beginPath();
+  ctx.fillStyle = 'rgba(255,255,255,0.86)';
+  ctx.ellipse(x, y, size * 0.5, size * 0.22, 0,0,Math.PI*2);
+  ctx.ellipse(x - size*0.24, y+8, size*0.36, size*0.18, 0,0,Math.PI*2);
+  ctx.ellipse(x + size*0.3, y+6, size*0.32, size*0.16, 0,0,Math.PI*2);
+  ctx.fill();
+}
+
+function drawGround(ctx, camera){
+  const cw = canvas.width / DPR, ch = canvas.height / DPR;
+  // main ground color
+  ctx.fillStyle = '#3f7db5';
+  const gy = WORLD.groundY - camera.y;
+  ctx.fillRect(0, gy, cw, ch - gy);
+  // tiles/parallax floor pattern
+  const tileW = 120;
+  ctx.save();
+  ctx.globalAlpha = 0.14;
+  for(let x = -tileW; x < WORLD.width; x += tileW){
+    const sx = x - camera.x;
+    const y = gy + 8 + Math.sin((x*0.002 + camera.x*0.001)) * 6;
+    ctx.fillStyle = 'rgba(255,255,255,0.03)';
+    ctx.fillRect(sx, y, tileW*0.9, 8);
+  }
+  ctx.restore();
+}
+
+/* -------------------
+   Start the game
+   ------------------- */
+const game = new Game();
+
+/* Allow simple debug tapping on canvas to spawn a wave or add score (desktop)
+   (not necessary for mobile, but helpful for testing) */
+canvas.addEventListener('dblclick', ()=>{ game.wave++; game.spawnWave(game.wave); });
+
+// Prevent page scroll when interacting with game
+['touchstart','touchmove','touchend','pointerdown','pointermove','pointerup'].forEach(ev=>{
+  document.addEventListener(ev, e=>{ if(e.target.closest('#wrap')) e.preventDefault(); }, {passive:false});
+});
+
+</script>
+</body>
+</html>

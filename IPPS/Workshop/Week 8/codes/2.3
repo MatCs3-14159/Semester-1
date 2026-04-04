@@ -1,0 +1,10 @@
+try:
+    numbers_input = input("Enter numbers separated by spaces: ")
+    numbers = [float(num) for num in numbers_input.split()]
+    if len(numbers) == 0:
+        raise ValueError("No numbers entered.")
+    average = sum(numbers) / len(numbers)
+except ValueError as e:
+    print(f"Invalid input! {e}")
+else:
+    print(f"The average of the entered numbers is: {average}")

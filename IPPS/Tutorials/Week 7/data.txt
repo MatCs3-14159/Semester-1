@@ -1,0 +1,6 @@
+Write a Python program that reads a text file named "data.txt" and
+finds the longest word in the file. The program should use a loop to
+read each line of the file, split each line into words using the split()
+method, and then iterate over each word to find the longest one. Once
+the loop has finished, the program should print the longest word found
+in the file

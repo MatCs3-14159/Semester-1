@@ -1,0 +1,13 @@
+def concatenate_strings(str1, str2):
+    try:
+        if not isinstance(str1, str) or not isinstance(str2, str):
+            raise TypeError("Both arguments must be strings.")
+        result = str1 + str2
+    except TypeError as te:
+        print(f"Error: {te}")
+        return None
+    else:
+        return result
+    
+print(concatenate_strings("Hello, ", "World!"))  
+print(concatenate_strings("Hello, ", 123))     
